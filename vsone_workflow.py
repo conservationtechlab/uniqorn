@@ -2,14 +2,14 @@ from ibeis.algo.verif.pairfeat import PairwiseFeatureExtractor
 from ibeis.control.manual_annot_funcs import *  
 import ibeis
 from utils import workflow
+import sys
 
 
-
-database_name = "tinyDB" # IBEIS Database name to work on
-photo_directory = "/home/yuerou/tiny/" #  File Path of the folder containing all the photos
-stations_directory = "~/code/station_data_peru.csv" # File path of the csv containing the coordinates of the stations
-images_summary_directory = "~/code/JaguarImagesSummary.csv" # File path of the csv containing all the metadata of the images, including station and survey number
-csv_destination_dir = "/home/yuerou/500.csv " # File path of the csv generated 
+database_name = sys.argv[1] # IBEIS Database name to work on
+photo_directory = sys.argv[2] #  File Path of the folder containing all the photos
+stations_directory = sys.argv[3] # File path of the csv containing the coordinates of the stations
+images_summary_directory = sys.argv[4] # File path of the csv containing all the metadata of the images, including station and survey number
+csv_destination_dir = sys.argv[5] # File path of the csv generated 
 
 def clustering_func(all_required_edges, lst_of_same_individual):
     '''
