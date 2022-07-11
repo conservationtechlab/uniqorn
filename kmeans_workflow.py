@@ -23,15 +23,19 @@ csv_destination_dir = sys.argv[5] # File path of the csv generated
 # images_summary_directory = "~/code/JaguarImagesSummary.csv" # File path of the csv containing all the metadata of the images, including station and survey number
 # csv_destination_dir = "/home/yuerou/500.csv " # File path of the csv generated 
 
+
 def clustering_func(all_required_edges, lst_of_same_individual):
     '''
-    Takes in all edges that needs a comparison/evaluation. 
-    Returns a list of paired individuals.
+    Takes in all edges that needs a comparison/evaluation and the list of same individuals already determined.
+    Returns a complete list of individuals based on the clsutering algorithm. 
+    KMeans takes in an stacked array of all feature vectors, cluster them based on a pre-determined number of clusters. 
     '''
     ibs = ibeis.opendb(database_name)
-    extr = PairwiseFeatureExtractor(ibs)
 
+    # The matrix that will contain all the stacked vectors. 
     matrix = np.array([])
+
+    # DF that contains the aid of the vectors.
     feat_df = pd.DataFrame({"aid":[]})
 
     for aid in ibs.get_valid_aids():

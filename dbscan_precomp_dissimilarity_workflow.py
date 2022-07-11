@@ -16,7 +16,9 @@ csv_destination_dir = sys.argv[5] # File path of the csv generated
 
 def clustering_func(all_required_edges, lst_of_same_individual):
     '''
-    Takes in all edges that needs a comparison/evaluation. 
+    Takes in all edges that needs a comparison/evaluation and the list of same individuals already determined.
+    Returns a complete list of individuals based on the clsutering algorithm. 
+    Computes the dissimilarity score and cluster based on the dissimilarity matrix. 
     Returns a list of paired individuals.
     '''
     ibs = ibeis.opendb(database_name)
@@ -28,7 +30,7 @@ def clustering_func(all_required_edges, lst_of_same_individual):
 
     dist_matrix = np.zeros((len(all_required_annots), len(all_required_annots)))
 
-    # Fills the dissimilarity matrix
+    # Fills the dissimilarity matrix. 
     for pair in list(it.combinations(all_required_annots, 2)):
         print(pair)
         match = extr._exec_pairwise_match([pair])[0]   
@@ -36,6 +38,7 @@ def clustering_func(all_required_edges, lst_of_same_individual):
         dist_matrix[all_required_annots.index(pair[0]), all_required_annots.index(pair[1])] = score
         dist_matrix[all_required_annots.index(pair[1]), all_required_annots.index(pair[0])] = score
 
+    # Cluster with DBSCAN
     clustering = DBSCAN(metric = 'precomputed').fit(dist_matrix)
     labels = clustering.labels_
 

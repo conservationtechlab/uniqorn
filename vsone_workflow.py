@@ -13,9 +13,10 @@ csv_destination_dir = sys.argv[5] # File path of the csv generated
 
 def clustering_func(all_required_edges, lst_of_same_individual):
     '''
-    Takes in all edges that needs a comparison/evaluation. 
-    Returns a list of paired individuals. 
+    Takes in all edges that needs a comparison/evaluation and a list of edges that already the same individual.
+    Returns a list of tuples of matching images. 
     '''
+    
     ibs = ibeis.opendb(database_name)
     #match_config = {"ratio_thresh": 0.65}
     extr = PairwiseFeatureExtractor(ibs)
@@ -26,7 +27,7 @@ def clustering_func(all_required_edges, lst_of_same_individual):
     for match in matches:
         aid1 = match.annot1['aid']
         aid2 = match.annot2['aid']
-        # Sum the fs (feature score) to get a simplified scalar score for each pair
+        # Sum the fs (feature score) to get a scalar score for each pair
         score = match.fs.sum()
         if (score > 0) :
             lst_of_same_individual.append((aid1, aid2))
