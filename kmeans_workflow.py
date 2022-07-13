@@ -15,6 +15,7 @@ photo_directory = sys.argv[2] #  File Path of the folder containing all the phot
 stations_directory = sys.argv[3] # File path of the csv containing the coordinates of the stations
 images_summary_directory = sys.argv[4] # File path of the csv containing all the metadata of the images, including station and survey number
 csv_destination_dir = sys.argv[5] # File path of the csv generated 
+symlink_dir = sys.argv[6] # Directory for manual review 
 
 
 # database_name = "tinyDB" # IBEIS Database name to work on
@@ -77,7 +78,7 @@ def clustering_func(all_required_edges, lst_of_same_individual):
 
 
 if __name__ == '__main__':
-    workflow(database_name, photo_directory, stations_directory, images_summary_directory, csv_destination_dir, clustering_func)
+    workflow(database_name, photo_directory, stations_directory, images_summary_directory, csv_destination_dir, clustering_func, symlink_dir)
 
 
 
