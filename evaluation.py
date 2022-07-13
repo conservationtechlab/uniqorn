@@ -8,6 +8,9 @@ import itertools as it
 
 
 def evaluate(db_name):
+    '''
+    Returns tp, tn, fp, fn of the clustering compared with the true grouping (extracted from the file name)
+    '''
     true_names = {}
     true_names_lst = []
     predicted_names = {}
@@ -26,7 +29,7 @@ def evaluate(db_name):
             predicted_names_lst.append(predicted_name)
             predicted_names[aid] = predicted_name
     
-    return evaluate_components(true_names, predicted_name)
+    return evaluate_components(true_names, predicted_names)
 
 
 def evaluate_components(true_names, predicted_names):

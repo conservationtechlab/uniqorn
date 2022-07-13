@@ -4,9 +4,13 @@ import pandas as pd
 import ibeis
 from ibeis.control.manual_annot_funcs import * 
 
-# Get the info (name and viewpoint) from the CSV which contains the individual name. 
 
 def edit_info_in_ibeis(database_name, csv_location):
+    ''' Get the info (name and viewpoint) from the metadata csv
+    Args:
+        database_name: the name of the database to be edited
+        csv_location: the file path of the metadata csv
+    '''
 
     # Get Database
     ibs = ibeis.opendb(database_name)
