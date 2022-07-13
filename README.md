@@ -4,7 +4,8 @@ Machine learning tools for individual identification using SIFT features
 ## Using uniqorn
 1. Install [IBEIS](https://github.com/Erotemic/ibeis). uniqorn depends on IBEIS to extract SIFT features and computed annotation matches.
 2. uniqorn assumes that the input files will consist of: 
-    - A directory of photos to be queried on; each photo's name starts with 'L' or 'R', which describes the viewpoint of the picture, then the photo contains the date and time of the photo in the format 'yyyymmdd' somewhere in the name. Finally if evaluation of the results of uniqorn is need (when you know the true names of the individuals), this will will also need to be present somewhere in the file name.
+    - A directory with two sub directories named "Left" and "Right", which contains photos of corresponding viewpoint. 
+    - Photos which contains the date and time of the photo in the format 'yyyymmdd' somewhere in the name. Finally if evaluation of the results of uniqorn is need (when you know the true names of the individuals), this will will also need to be present somewhere in the file name.
     - A CSV containing the name of the files (with column name either "Image1" or "Image2"), name of the survey ("SurveyID"), station ID ("StationID")
     - A CSV containing the station ID ("StationID"), the station's latitude ("Lat") and longitude ("Long")
 3. Import the photos in the photo directory into IBEIS. If the photos are already cropped, then select all the photos and use  `Add annotation from entire image", otherwise crop the images to obtain annotations one by one. 
