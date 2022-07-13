@@ -24,6 +24,14 @@ Example call:
 python -i vsone_workflow.py "tinyDB" "/home/yuerou/tiny/" "~/code/station_data_peru.csv" "~/code/JaguarImagesSummary.csv" "/home/yuerou/generated_info.csv "
 ```
 6. The results will be reflected in the `Name` column inside IBEIS. The Tree of Names will also reflect the clustering.
+### Manual Review
+Sometimes when images are blurry, the workflow cannot identify the same individual from different images. Usually the workflow will have more false negatives (the same individual were put into different groups) than false positive (different individuals were put into the same group). Therefore manual review is necessary. When the workflow finish, it will put photos which it predicts to be the same individual under the same folder under the directory specified by `symlink_dir`. If there's any images that you believe should belong to another group (ie. merging two groups), you can run 
+`python -i utils.py` then run `review_photo_change(image_name, reviewed_name, csv_dir, symlink_dir)` to move the photo to desired folder under the reviewed name. For example, 
+```
+review_photo_change("RSDZG  12_20140729_133315_POM 75.jpg", 1, "/home/yuerou/500.csv", "/home/yuerou/symlinktest/")
+```
+
+
 
 ## How it works
 Uniqorn will first group images based on their GPS coordinates and time. If the time difference between two images are smaller than 120 second and they have the same GPS coordinates, then the two images will be considered from the same occurrence. Next uniqorn will try to group the occurrences of the same individual together. Each images will be queried against images of other occurrences using the One Vs One algorithm from IBEIS. If the algorithm considers two images a match, then the two occurrences the images are from will be grouped together. 
