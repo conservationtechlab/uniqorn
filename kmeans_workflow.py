@@ -26,32 +26,33 @@ symlink_dir = sys.argv[6] # Directory for manual review
 
 
 def clustering_func(all_required_edges, lst_of_same_individual):
-    '''
-    Takes in all edges that needs a comparison/evaluation and the list of same individuals already determined.
-    Returns a complete list of individuals based on the clsutering algorithm. 
-    KMeans takes in an stacked array of all feature vectors, cluster them based on a pre-determined number of clusters. 
+    ''' KMeans takes in an stacked array of all feature vectors, cluster them based on a pre-determined number of clusters. 
+    Args: 
+        all_required_edges: A list of tuples of edges that requires inspection by the algorithm
+        lst_of_same_individual: A list of tuples of edges that are confirmed to be the same individual determined by time and GPS. 
+    Returns:
+        list: A complete list of edges that are determined to be the same individual based on the clustering algorithm and time and GPS. 
     '''
     ibs = ibeis.opendb(database_name)
 
     # The matrix that will contain all the stacked vectors. 
     matrix = np.array([])
 
-    # DF that contains the aid of the vectors.
+    # DF that contains the aid of the vectors and their correspondence with the vectors
     feat_df = pd.DataFrame({"aid":[]})
 
+    # Stacking the feature vectors 
     for aid in ibs.get_valid_aids():
         feat = ibs.get_annot_vecs(aid)
         if (matrix.size == 0):
             matrix = feat
         else:
             matrix = np.vstack([matrix, feat])
-        print(aid)
         for i in range(len(feat)):
             feat_df.loc[len(feat_df.index)] = [aid]
 
     clustering = KMeans(n_clusters=30).fit(matrix)
     feat_df["Label"] = clustering.labels_
-    feat_df.to_csv("feat_df.csv")
 
     all_edges_need_inspection = []
     comb = list(it.combinations(list(ibs.annots()), 2))
@@ -66,7 +67,7 @@ def clustering_func(all_required_edges, lst_of_same_individual):
         aid2 = edge[1]
         aid1_feats = np.unique(feat_df[feat_df["aid"] == aid1]["Label"].tolist()) # All labels that aid1 has 
         aid2_feats = np.unique(feat_df[feat_df["aid"] == aid2]["Label"].tolist())
-        common_feat_count = 0 # if >=10 --> group!
+        common_feat_count = 0 # if >= threshold number of features --> group!
         for i in aid1_feats:
             for j in aid2_feats:
                 if i == j:

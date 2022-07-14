@@ -15,9 +15,13 @@ symlink_dir = sys.argv[6] # Directory for manual review
 
 
 def clustering_func(all_required_edges, lst_of_same_individual):
-    '''
-    Takes in all edges that needs a comparison/evaluation and a list of edges that already the same individual.
-    Returns a list of tuples of matching images. 
+    ''' Computes the dissimilarity score and cluster based on the dissimilarity matrix. 
+  
+    Args: 
+        all_required_edges: A list of tuples of edges that requires inspection by the algorithm
+        lst_of_same_individual: A list of tuples of edges that are confirmed to be the same individual determined by time and GPS. 
+    Returns:
+        list: A complete list of edges that are determined to be the same individual based on the clustering algorithm and time and GPS. 
     '''
     
     ibs = ibeis.opendb(database_name)

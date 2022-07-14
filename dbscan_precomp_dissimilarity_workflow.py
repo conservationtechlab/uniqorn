@@ -17,18 +17,18 @@ csv_destination_dir = sys.argv[5] # File path of the csv generated
 symlink_dir = sys.argv[6] # Directory for manual review 
 
 def clustering_func(all_required_edges, lst_of_same_individual):
-    '''
-    Takes in all edges that needs a comparison/evaluation and the list of same individuals already determined.
-    Returns a complete list of individuals based on the clsutering algorithm. 
-    Computes the dissimilarity score and cluster based on the dissimilarity matrix. 
-    Returns a list of paired individuals.
+    ''' Computes the dissimilarity score and cluster based on the dissimilarity matrix. 
+  
+    Args: 
+        all_required_edges: A list of tuples of edges that requires inspection by the algorithm
+        lst_of_same_individual: A list of tuples of edges that are confirmed to be the same individual determined by time and GPS. 
+    Returns:
+        list: A complete list of edges that are determined to be the same individual based on the clustering algorithm and time and GPS. 
     '''
     ibs = ibeis.opendb(database_name)
-    #match_config = {"ratio_thresh": 0.65}
     extr = PairwiseFeatureExtractor(ibs)
     all_required_annots = list(set(it.chain.from_iterable(all_required_edges))) # Since a matrix is needed, must extract all pairwise scores 
     # Extract pairwise features for every requested pair of annotations
-
 
     dist_matrix = np.zeros((len(all_required_annots), len(all_required_annots)))
 
@@ -44,7 +44,7 @@ def clustering_func(all_required_edges, lst_of_same_individual):
     clustering = DBSCAN(metric = 'precomputed').fit(dist_matrix)
     labels = clustering.labels_
 
-    # Put images with the same label into one list in the dictionary
+    # Put images with the same label into one list in the dictionary with keys the labels and values the aid 
     same_individual_lst = {}
     for i in range(len(labels)):
         if labels[i] not in same_individual_lst.keys():
