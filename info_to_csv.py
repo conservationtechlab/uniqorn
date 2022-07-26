@@ -19,9 +19,9 @@ images_summary_directory = "~/code/JaguarImagesSummary.csv" # File path of the c
 csv_destination_dir = "/home/yuerou/500.csv" # File path of the csv generated 
 '''
 
-timestamp_threshold = 120
+timestamp_threshold = 200
 
-def integrating_info(photo_directory, stations_dir, images_summary_dir, csv_destination_dir):
+def integrating_info(input_csv, csv_destination_dir):
     ''' Extract information on name, time, GPS, viewpoint of images and store them into a csv file.
     
     Args: 
@@ -32,70 +32,35 @@ def integrating_info(photo_directory, stations_dir, images_summary_dir, csv_dest
 
     '''
 
-    stations = pd.read_csv(stations_dir)
-    images_summary = pd.read_csv(images_summary_dir)
+    metadata = pd.read_csv(input_csv)
     
-    metadata = pd.DataFrame({"File Name": [], "Individual Name":[], "Time": [], "GPS": [], "Viewpoint": []})
+    # metadata = pd.DataFrame({"File Name": [], "Individual Name":[], "Time": [], "GPS": [], "Viewpoint": []})
 
-    num_occurrences = 0
-    unix_time = 0
-    left_photo_dir = photo_directory + "Left/"
-    right_photo_dir = photo_directory + "Right/"
-    for photo_dir in [left_photo_dir, right_photo_dir]:
-        for filename in os.listdir(photo_dir):
-            if "jpg" in filename: # Only look at jpg images for now
+    # Check if the some images already has a name 
+    if "Name" not in metadata.columns:
+        metadata["Name"] = ""
 
-                #with open(photo_dir+filename, "rb") as img_file:
-                #    img = Image(img_file)
+    # Sort the dataframe so that the ones with an existing name can be at the top
+    metadata = metadata.sort_values("Name")
+    metadata = metadata.reset_index(drop = True)
 
-                # Get time from filename
-                date = re.findall("\d{8}", filename)[0]
-                time_of_day = re.findall("\d{8}_(\d{6})", filename)[0]
-                
-                # changing to unix time
-                date_time = datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]), int(time_of_day[0:2]), int(time_of_day[2:4]), int(time_of_day[4:6]))
-                unix_time = time.mktime(date_time.timetuple())
+    # Get a new dataframe of entries with known names, and append to it 
+    metadata_with_name = metadata[(metadata["Name"].notna()) & (metadata["Name"] != "")]
+    print(len(metadata_with_name))
+    for i in range(len(metadata_with_name), len(metadata)):
+        unix_time = metadata.iloc[i,:]["Time"]
+        gps_info = metadata.iloc[i, :]["GPS"]
+        same_occurrence = metadata[(abs(metadata["Time"] - unix_time) <= timestamp_threshold) & (metadata["GPS"] == gps_info) & (metadata["Name"].notna())  & (metadata["Name"] != "")]
+        print(same_occurrence)
+        if same_occurrence.empty:
+            metadata.at[i, "Name"] = unix_time # The new name will be the unix time of the image to prevent duplicates (will there ever be two jaguars on camera at the same time but at two different locations???)
+        else:
+            metadata.at[i, "Name"] = same_occurrence["Name"].values[0]
+        print(metadata)
 
-                
-                #Get time from EXIF
-                '''
-                time_original = re.sub(":", " ", img.get("datetime_original"))
-                time_parsed = re.findall("\d+", time_original)
-                date_time = datetime.datetime(int(time_parsed[0]), int(time_parsed[1]), int(time_parsed[2]), int(time_parsed[3]), int(time_parsed[4]), int(time_parsed[5]))
-                unix_time = time.mktime(date_time.timetuple())
-                '''
-
-                # adding GPS location
-                filename2 = re.findall("(\d+_\d+_\d+)", filename)[0]
-                survey_id = images_summary[(images_summary["Image1"].str.contains(filename2, na = False)) | (images_summary["Image2"].str.contains(filename2, na = False))]["SurveyID"].reset_index()["SurveyID"][0]
-                station_id = images_summary[(images_summary["Image1"].str.contains(filename2, na = False)) | (images_summary["Image2"].str.contains(filename2, na = False))]["StationID"].reset_index()["StationID"][0]
-            
-                lat = stations[(stations["SurveyID"] == survey_id) & (stations["StationID"] == station_id)]["Lat"].values[0]
-                long = stations[(stations["SurveyID"] == survey_id) & (stations["StationID"] == station_id)]["Long"].values[0]
-                gps_info = (lat, long)
-                
-                # determine the individual name from time stamp and GPS location. Look through traversed images to see if there's any images from the same occurrence. 
-                same_occurrence = metadata[(abs(metadata["Time"] - unix_time) <= timestamp_threshold) & (metadata["GPS"] == gps_info)]
+    metadata.to_csv(csv_destination_dir, index = False)
 
 
-                if (same_occurrence.empty):
-                    name = "Individual No. " + str(num_occurrences)
-
-                    num_occurrences += 1 # A new individual is added to the metadata df
-                else:
-                    name = same_occurrence["Individual Name"].values[0]
-                
-                # Extracting viewpoint info from the directory it was in
-                if photo_dir == right_photo_dir:
-                    viewpoint = 1
-                else:
-                    viewpoint = 5 # In constants.py left is 5
-
-                # adding time and GPS to data frame
-                metadata.loc[len(metadata.index)] = [filename, name, unix_time, gps_info, viewpoint] 
-
-
-    metadata.to_csv(csv_destination_dir)
 
 
 

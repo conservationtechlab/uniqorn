@@ -1,3 +1,4 @@
+from tkinter import LEFT
 import numpy as np
 from ibeis.control.manual_annot_funcs import *  
 import ibeis
@@ -7,7 +8,7 @@ import itertools as it
 import pandas as pd
 import os
 import cv2
-
+import re
 
 # Utility functions
 
@@ -74,32 +75,36 @@ def connect(db_name, lst_of_same_individual, modify_db = True):
 
     if modify_db:
         ibs = ibeis.opendb(db_name)
+        
         # Edit names in IBEIS
-        counter = 0
         for key in connected_components:
-            ibs.set_annot_names(connected_components[key], [str(counter) for i in range(len(connected_components[key]))])
-            counter += 1
+            existing_names =  [name for name in ibs.get_annot_name_texts(connected_components[key])]# if one of the names is not the default name, is when the csv was imported, it has a predesignated name, use that name
+            final_name = ""
+            for i in range(len(existing_names)):
+                if (re.findall("^\d{10}$", existing_names[i]) == []):
+                    final_name = existing_names[i]
+            if final_name == "":
+                final_name = existing_names[0] # Picked a random name from the annotations in the group 
+            ibs.set_annot_names(connected_components[key], [final_name for i in range(len(connected_components[key]))])
     else:
         return connected_components
 
 
-def workflow(database_name, photo_directory, stations_directory, images_summary_directory, csv_destination_dir, clustering_func, symlink_dir):
+def workflow(database_name, photo_directory, input_csv, csv_destination_dir, clustering_func, symlink_dir, threshold, aid_list = None):
     ''' The complete workflow for extracting information from csv, computing matches and editing names in ibeis
     Args: 
         database_name: the database to be edited on in IBEIS 
         photo_directory: The directory in which the photos are in. Need to contain two sub directories, one named  `Left` and the other `Right` for collecting viewpoint purpose. 
-        stations_dir: The path for the csv that contains coordinates of the stations
-        images_summary_dir: File path of the csv containing all the metadata of the images, including station ID and survey number
         csv_destination_dir: Designated file path of the metadata csv generated 
         clustering_func: the clustering function to be used on. Currently the best one is vsone score. 
         symlink_dir: the directory in which the manual review of photos will take place. 
     '''
     # Generate a csv with name name, GPS, time, viewpoint and individual name based on GPS and time
-    info_to_csv.integrating_info(photo_directory, stations_directory, images_summary_directory, csv_destination_dir)
-
+    info_to_csv.integrating_info(input_csv, csv_destination_dir)
+    metadata = pd.read_csv(csv_destination_dir)
     # Plug in the names to IBEIS
     edit_info_in_ibeis.edit_info_in_ibeis(database_name, csv_destination_dir)
-
+    
     # Apply image equalization on the images if the images are too dark
     left_photo_dir = photo_directory + "Left/"
     right_photo_dir = photo_directory + "Right/"
@@ -107,11 +112,18 @@ def workflow(database_name, photo_directory, stations_directory, images_summary_
         img_preprocess(photo_dir)
 
     ibs = ibeis.opendb(database_name)
+        # For bootstrapping purposes
+    filenames = []
+    for file in os.listdir(left_photo_dir):
+        filenames.append(file)
+    for file in os.listdir(right_photo_dir):
+        filenames.append(file)
 
-
+    if (aid_list == None):
+        aid_list = ibs.get_valid_aids()
     # Find all permutations of aids except aids under the same individual
     all_required_edges = [] # All edges that requires inspection
-    all_comb = list(it.combinations(list(ibs.annots()), 2))
+    all_comb = list(it.combinations(aid_list, 2))
     lst_of_same_individual = [] # List for storing aids of the same individual
 
     for edge in all_comb:
@@ -120,19 +132,22 @@ def workflow(database_name, photo_directory, stations_directory, images_summary_
         elif (ibs.get_annot_name_texts(edge[0]) == ibs.get_annot_name_texts(edge[1])) & ((edge[1], edge[0]) not in lst_of_same_individual):
             lst_of_same_individual.append(edge)
         
-    lst_of_same_individual = clustering_func(all_required_edges, lst_of_same_individual) # Obtains a list of tuples of matches
+    lst_of_same_individual = clustering_func(database_name, all_required_edges, lst_of_same_individual, threshold) # Obtains a list of tuples of matches
 
     connect(database_name, lst_of_same_individual, modify_db= True) # Traverse the list of tuples to mark all connected components as the same individual
 
-    metadata = pd.read_csv(csv_destination_dir)
+    
     metadata["Predicted Name"] = ""
-
-    for aid in ibs.get_valid_aids():
+    
+    for aid in aid_list:
         predicted_name = ibs.get_annot_name_texts(aid)
         metadata.loc[metadata["File Name"] == ibs.get_annot_image_names(aid), "Predicted Name"] = predicted_name
     
     metadata.to_csv(csv_destination_dir)
-    sort_photos_for_manual_review(csv_destination_dir, symlink_dir, photo_directory)
+    
+    #sort_photos_for_manual_review(csv_destination_dir, symlink_dir, photo_directory)
+    return aid_list
+    
 
     
 def sort_photos_for_manual_review(csv_dir, symlink_dir, photo_dir):
@@ -150,7 +165,6 @@ def sort_photos_for_manual_review(csv_dir, symlink_dir, photo_dir):
     right_photo_dir = photo_dir + "Right/"
 
     for predicted_name in names_list:
-        print(predicted_name)
         filename_lst = metadata[metadata["Predicted Name"] == predicted_name]["File Name"]
         folder_name= symlink_dir + str(predicted_name) + "/"
         os.mkdir(folder_name)
@@ -177,6 +191,7 @@ def review_photo_change(image_name, review_name, csv_dir, symlink_dir):
     src_path = symlink_dir + str(original_name) + "/" + image_name
     dest_path = symlink_dir + str(review_name) + "/" + image_name
     metadata.loc[metadata["File Name"] == image_name, "Symlink Location"] = dest_path
+    metadata.loc[metadata["File Name"] == image_name, "Predicted Name"] = review_name
     os.rename(src_path, dest_path)
     metadata.to_csv(csv_dir)
 
@@ -185,7 +200,6 @@ def img_preprocess(photo_dir):
     Apply histogram equalization on the images in the directory if it's too dark
     Args:
         photo_dir: the directory which contains images that needs to be stretched
-
     '''
     def show_hsv_equalized(image):
         H, S, V = cv2.split(cv2.cvtColor(image, cv2.COLOR_BGR2HSV))

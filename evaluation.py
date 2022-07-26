@@ -7,17 +7,21 @@ from scipy.special import comb
 import itertools as it
 
 
-def evaluate(db_name):
-    '''
-    Returns tp, tn, fp, fn of the clustering compared with the true grouping (extracted from the file name)
+def evaluate(db_name, aid_list = None):
+    ''' Returns tp, tn, fp, fn of the clustering compared with the true grouping (extracted from the file name)
+    Args: 
+        db_name: Name of the database to evaluate
+    Returns:
+        list: a list of true positive, true negative, false positive, false negative counts. These were calculated on pairs of points. For example, true positive is the number of pairs of annotations that are in the same group in the true/real grouping and in the same group in the predicted grouping. 
     '''
     true_names = {}
     true_names_lst = []
     predicted_names = {}
     predicted_names_lst = []
     ibs = ibeis.opendb(db_name)
+    if (aid_list == None):
+        aid_list = ibs.get_valid_aids()
 
-    aid_list = ibs.get_valid_aids()
 
     for aid in aid_list:
         image_name = ibs.get_annot_image_names(aid)
@@ -29,12 +33,17 @@ def evaluate(db_name):
             predicted_names_lst.append(predicted_name)
             predicted_names[aid] = predicted_name
     
-    return evaluate_components(true_names, predicted_names)
+    return evaluate_components(true_names, predicted_names), true_names_lst, predicted_names_lst
 
 
 def evaluate_components(true_names, predicted_names):
-    '''
-    Takes in two dictionaries. Returns tp, tn, fp, fn in a list
+    ''' 
+    Args:
+        true_names: dictionary of true names. key: aid of the corresponding image. Value: Actual name of the jaguar
+        predicted_name: dictionary of predicted names. key: aid of the corresponding image. Value: Predicted name of the jaguar
+    Returns:
+        list: a list of true positive, true negative, false positive, false negative counts. 
+    
     '''
     unique_classification_names, unique_classfication_counts = np.unique(list(predicted_names.values()), return_counts = True)
     tp_plus_fp = comb(unique_classfication_counts, 2).sum() # np.bincount will return a list of the count of the labels. Then do N choose 2 on each of the labels to get the total number of possible pairs inside each label, and then sum the total number of pairs up.
