@@ -6,9 +6,9 @@ Machine learning tools for individual identification using SIFT features
 2. uniqorn assumes that the input files will consist of: 
     - A directory with two sub directories named "Left" and "Right", which contains photos of corresponding viewpoint. 
     - A CSV containing the name of the files ("File Name"), the unix time of the picture ("Time"), the location of the picture ("GPS"), and the viewpoint of the picture ('Viewpoint"). 
-	- The location does not have to be the coordinates. They could be just the station name/camera name. 
-	- Viewpoint are either 1 (right) or 5 (left).  
-	- If some of the images already has a name (for example with prior human review), then these names can be marked in an optional name column ("Name"), and the workflow will use this name for all images it determined to be of the same individual. 
+	    - The location does not have to be the coordinates. They could be just the station name/camera name. 
+	    - Viewpoint are either 1 (right) or 5 (left).  
+	    - If some of the images already has a name (for example with prior human review), then these names can be marked in an optional name column ("Name"), and the workflow will use this name for all images it determined to be of the same individual. 
 3. Import the photos in the photo directory into IBEIS. If the photos are already cropped, then select all the photos and use  `Add annotation from entire image", otherwise crop the images to obtain annotations one by one. 
 4. Set the annotation species.
 5. To use the one vs one sum to compute matches, call
