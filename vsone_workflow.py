@@ -5,12 +5,10 @@ import ibeis
 from utils import workflow
 import sys
 import re
-import viz
 import numpy as np
 
 database_name = sys.argv[1] # IBEIS Database name to work on
 photo_directory = sys.argv[2] #  File Path of the folder containing all the photos
-
 input_csv = sys.argv[3] #  File Path of the folder containing all the photos
 csv_destination_dir = sys.argv[4] # File path of the csv generated 
 symlink_dir = sys.argv[5] # Directory for manual review 
@@ -49,7 +47,6 @@ def clustering_func(database_name, all_required_edges, lst_of_same_individual, t
                 print((aid1, aid2))
             lst_of_same_individual.append((aid1, aid2))
 
-    np.save("scores", np.array(scores))
 
     
     return lst_of_same_individual
